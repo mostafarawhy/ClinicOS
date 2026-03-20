@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────
+
+enum UserRole {
+  RECEPTIONIST
+  ADMIN
+}
+
+enum AppointmentStatus {
+  UPCOMING
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+
+enum TreatmentType {
+  CHECKUP
+  CLEANING
+  FILLING
+  EXTRACTION
+  ROOT_CANAL
+  CROWN
+  WHITENING
+  ORTHODONTICS
+  IMPLANT
+  CONSULTATION
+  OTHER
+}
+
+// ─── Models ──────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(RECEPTIONIST)
+  createdAt    DateTime @default(now())
+
+  dentist      Dentist?
+  appointments Appointment[] @relation("CreatedBy")
+
+  @@map("users")
+}
+
+model Dentist {
+  id    String @id @default(cuid())
+  name  String
+  color String
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  appointments Appointment[]
+
+  @@map("dentists")
+}
+
+model Patient {
+  id        String   @id @default(cuid())
+  fullName  String
+  phone     String
+  email     String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+
+  @@map("patients")
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  date          DateTime          @db.Date
+  time          String
+  status        AppointmentStatus @default(UPCOMING)
+  treatmentType TreatmentType
+  notes         String?
+  createdAt     DateTime          @default(now())
+
+  patientId   String
+  patient     Patient @relation(fields: [patientId], references: [id])
+
+  dentistId   String
+  dentist     Dentist @relation(fields: [dentistId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+
+  @@index([date])
+  @@index([dentistId, date])
+
+  @@map("appointments")
+}
