@@ -15,30 +15,20 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null); // clear any previous error
+    setError(null);
 
-    // signIn() from next-auth/react sends credentials to NextAuth.
-    // redirect: false means "don't let NextAuth handle the redirect,
-    // I'll do it myself." This lets us check for errors first.
     const result = await signIn("credentials", {
       email: form.email,
       password: form.password,
       redirect: false,
     });
 
-    // result.error is set when authorize() returned null
-    // (wrong email, wrong password, or any failure)
     if (result?.error) {
       setError("Invalid email or password");
       setLoading(false);
       return;
     }
 
-    // Success — session cookie is now set.
-    // We push to /schedule and Next.js will do a full navigation.
-    // router.push (soft nav) sometimes doesn't re-run middleware,
-    // so we use router.refresh() first to sync the session,
-    // then push.
     router.refresh();
     router.push("/schedule");
   }
@@ -46,7 +36,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary mb-4">
             <Stethoscope className="h-7 w-7 text-primary-foreground" />
@@ -59,10 +48,8 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card */}
         <div className="rounded-xl border border-border bg-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
@@ -85,7 +72,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
@@ -122,12 +108,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error message */}
             {error && (
               <p className="text-xs text-destructive font-medium">{error}</p>
             )}
 
-            {/* Submit */}
+
             <button
               type="submit"
               disabled={loading}

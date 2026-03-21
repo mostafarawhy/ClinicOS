@@ -1,59 +1,52 @@
-import { ScheduleColumn, type Appointment } from "./schedule-column";
+import { appointments } from "@/lib/data";
+import { ScheduleColumn } from "./schedule-column";
 
-const DENTISTS = [
-  { name: "Dr. Ahmed Hassan", color: "#2DD4BF" },
-  { name: "Dr. Sara Mahmoud", color: "#818CF8" },
-  { name: "Dr. Omar Khalil",  color: "#FB923C" },
-];
-
-const todayAppointments: Appointment[] = [
-  { id: "s1",  patientName: "Ahmed Hassan",  phone: "0101234567", treatment: "Cleaning",     time: "09:00", status: "completed", },
-  { id: "s2",  patientName: "Nour El-Din",   phone: "0155443322", treatment: "Root Canal",   time: "11:00", status: "completed", },
-  { id: "s3",  patientName: "Hana Samir",    phone: "0128899001", treatment: "Consultation", time: "13:00", status: "scheduled", },
-  { id: "s4",  patientName: "Youssef Fawzy", phone: "0141122334", treatment: "Crown",        time: "15:00", status: "scheduled", },
-  { id: "s5",  patientName: "Sara Mahmoud",  phone: "0109876543", treatment: "Filling",      time: "09:30", status: "completed", },
-  { id: "s6",  patientName: "Layla Mostafa", phone: "0113344556", treatment: "Whitening",    time: "11:30", status: "scheduled", },
-  { id: "s7",  patientName: "Karim Adel",    phone: "0106677889", treatment: "Cleaning",     time: "14:00", status: "cancelled", },
-  { id: "s8",  patientName: "Omar Khalil",   phone: "0121122334", treatment: "Extraction",   time: "10:00", status: "completed", },
-  { id: "s9",  patientName: "Ahmed Hassan",  phone: "0101234567", treatment: "Filling",      time: "12:00", status: "scheduled", },
-  { id: "s10", patientName: "Nour El-Din",   phone: "0155443322", treatment: "Crown",        time: "14:30", status: "scheduled", },
-];
-
-const dentistAppts: Record<string, Appointment[]> = {
-  "Dr. Ahmed Hassan": todayAppointments.filter((_, i) => i < 4),
-  "Dr. Sara Mahmoud": todayAppointments.filter((_, i) => i >= 4 && i < 7),
-  "Dr. Omar Khalil":  todayAppointments.filter((_, i) => i >= 7),
-};
+const TODAY = "2025-03-19";
 
 export default function SchedulePage() {
-  const total = Object.values(dentistAppts).reduce((sum, a) => sum + a.length, 0);
+  const todayAppts = appointments.filter((a) => a.date === TODAY);
+  const aliAppts = todayAppts
+    .filter((a) => a.dentist === "Dr. Ali")
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const raniaAppts = todayAppts
+    .filter((a) => a.dentist === "Dr. Rania")
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const completedAli = aliAppts.filter((a) => a.status === "completed").length;
+  const completedRania = raniaAppts.filter(
+    (a) => a.status === "completed",
+  ).length;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Saturday, March 21, 2026</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{total} total appointments today</p>
+          <p className="text-muted-foreground text-sm">
+            Wednesday, March 19, 2025
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {todayAppts.length} total appointments today
+          </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
           <span className="text-xs text-muted-foreground">Live</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {DENTISTS.map((d) => {
-          const appts = dentistAppts[d.name] ?? [];
-          return (
-            <ScheduleColumn
-              key={d.name}
-              dentist={d.name}
-              color={d.color}
-              appointments={appts}
-              completedCount={appts.filter((a) => a.status === "completed").length}
-            />
-          );
-        })}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <ScheduleColumn
+          dentist="Dr. Ali"
+          color="#3B82F6"
+          appointments={aliAppts}
+          completedCount={completedAli}
+        />
+        <ScheduleColumn
+          dentist="Dr. Rania"
+          color="#2DD4BF"
+          appointments={raniaAppts}
+          completedCount={completedRania}
+        />
       </div>
     </div>
   );
