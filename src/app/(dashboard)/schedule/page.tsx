@@ -1,3 +1,3 @@
-export default function SchedulePage() {
-  return <div>Schedule</div>;
+export default function Scheduel() {
+  return <div>Appointments</div>;
 }

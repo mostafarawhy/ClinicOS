@@ -10,8 +10,9 @@ datasource db {
 // ─── Enums ───────────────────────────────────────────
 
 enum UserRole {
-  RECEPTIONIST
   ADMIN
+  RECEPTIONIST
+  DENTIST
 }
 
 enum AppointmentStatus {
