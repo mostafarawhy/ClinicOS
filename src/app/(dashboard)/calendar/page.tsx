@@ -21,7 +21,6 @@ const DENTISTS = [
 ];
 
 const dentistStyle = Object.fromEntries(DENTISTS.map((d) => [d.name, d.style]));
-const dentistColor = Object.fromEntries(DENTISTS.map((d) => [d.name, d.color]));
 
 // Week: Sat 21 – Thu 26 March 2026 (Egyptian work week)
 const WEEK_DAYS = [
