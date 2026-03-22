@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
 const navItems = [
-  { label: "Schedule",     href: "/schedule",     icon: CalendarDays },
-  { label: "Appointments", href: "/appointments",  icon: PlusCircle },
-  { label: "Patients",     href: "/patients",      icon: Users },
-  { label: "Calendar",     href: "/calendar",      icon: CalendarRange },
-  { label: "Analytics",    href: "/analytics",     icon: LayoutDashboard },
+  { label: "Schedule", href: "/schedule", icon: CalendarDays },
+  { label: "Appointments", href: "/appointments", icon: PlusCircle },
+  { label: "Patients", href: "/patients", icon: Users },
+  { label: "Calendar", href: "/calendar", icon: CalendarRange },
+  { label: "Analytics", href: "/analytics", icon: LayoutDashboard },
 ];
 
 export function Sidebar() {
@@ -34,8 +34,12 @@ export function Sidebar() {
           <Stethoscope className="h-4 w-4 text-primary-foreground" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-sidebar-foreground leading-none">DentaFlow</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Clinic Management</p>
+          <p className="text-sm font-semibold text-sidebar-foreground leading-none">
+            DentaFlow
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Clinic Management
+          </p>
         </div>
       </div>
 
@@ -52,10 +56,15 @@ export function Sidebar() {
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     active
                       ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", active ? "text-sidebar-primary" : "")} />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      active ? "text-sidebar-primary" : "",
+                    )}
+                  />
                   {label}
                 </Link>
               </li>
@@ -72,10 +81,15 @@ export function Sidebar() {
             "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
             pathname === "/settings"
               ? "bg-sidebar-accent text-sidebar-primary"
-              : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
           )}
         >
-          <Settings className={cn("h-4 w-4 shrink-0", pathname === "/settings" ? "text-sidebar-primary" : "")} />
+          <Settings
+            className={cn(
+              "h-4 w-4 shrink-0",
+              pathname === "/settings" ? "text-sidebar-primary" : "",
+            )}
+          />
           Settings
         </Link>
         <button

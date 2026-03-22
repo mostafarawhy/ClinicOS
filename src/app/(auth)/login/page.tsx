@@ -12,13 +12,25 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ email: "", password: "" });
 
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+    if (error) setError(null);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!form.email.trim() || !form.password.trim()) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const result = await signIn("credentials", {
-      email: form.email,
+      email: form.email.trim(),
       password: form.password,
       redirect: false,
     });
@@ -61,12 +73,13 @@ export default function LoginPage() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   required
                   placeholder="you@dentaflow.com"
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={handleChange}
                   className="w-full rounded-md border border-border bg-input pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition"
                 />
               </div>
@@ -83,14 +96,13 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
+                  onChange={handleChange}
                   className="w-full rounded-md border border-border bg-input pl-9 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition"
                 />
                 <button
@@ -111,7 +123,6 @@ export default function LoginPage() {
             {error && (
               <p className="text-xs text-destructive font-medium">{error}</p>
             )}
-
 
             <button
               type="submit"
