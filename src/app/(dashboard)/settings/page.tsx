@@ -5,7 +5,11 @@ import { StatusForm } from "./status-form";
 import { NotificationsForm } from "./notifications-form";
 import { AddUserForm } from "./add-user-form";
 
-function Section({ title, description, children }: {
+function Section({
+  title,
+  description,
+  children,
+}: {
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -28,21 +32,27 @@ export default async function SettingsPage() {
   const user = session?.user;
   const isAdmin = user?.role === "ADMIN";
 
-  const initials = user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2) ?? "?";
+  const initials =
+    user?.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2) ?? "?";
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <div>
         <h1 className="text-base font-semibold text-foreground">Settings</h1>
-        <p className="text-xs text-muted-foreground mt-1">Manage your account and preferences</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Manage your account and preferences
+        </p>
       </div>
 
       {/* Profile */}
-      <Section title="My Profile" description="Update your personal information">
+      <Section
+        title="My Profile"
+        description="Update your personal information"
+      >
         <ProfileForm
           name={user?.name ?? ""}
           email={user?.email ?? ""}
@@ -56,18 +66,27 @@ export default async function SettingsPage() {
       </Section>
 
       {/* Status */}
-      <Section title="Availability Status" description="Let your team know your current status">
+      <Section
+        title="Availability Status"
+        description="Let your team know your current status"
+      >
         <StatusForm />
       </Section>
 
       {/* Notifications */}
-      <Section title="Notifications" description="Choose what you want to be notified about">
+      <Section
+        title="Notifications"
+        description="Choose what you want to be notified about"
+      >
         <NotificationsForm />
       </Section>
 
       {/* Admin only */}
       {isAdmin && (
-        <Section title="Add New User" description="Create a login account for a staff member">
+        <Section
+          title="Add New User"
+          description="Create a login account for a staff member"
+        >
           <AddUserForm />
         </Section>
       )}

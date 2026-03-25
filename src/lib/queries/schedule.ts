@@ -2,14 +2,22 @@ import { db } from "@/lib/db";
 import type { DentistWithAppointments } from "@/types";
 
 export async function getTodaySchedule(): Promise<DentistWithAppointments[]> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
 
   const dentists = await db.dentist.findMany({
     orderBy: { name: "asc" },
     include: {
       appointments: {
-        where: { date: today },
+        where: {
+          date: {
+            gte: start,
+            lt: end,
+          },
+        },
         orderBy: { time: "asc" },
         include: {
           patient: {

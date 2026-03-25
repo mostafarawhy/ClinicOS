@@ -11,13 +11,14 @@ function formatTreatment(raw: TreatmentType): string {
 }
 
 function formatStatus(raw: AppointmentStatus): string {
-  return raw.toLowerCase();
+  return raw.toLocaleLowerCase();
 }
 
 export default async function SchedulePage() {
   const dentists = await getTodaySchedule();
 
   const today = new Date();
+
   const totalToday = dentists.reduce(
     (sum, d) => sum + d.appointments.length,
     0,
@@ -34,6 +35,7 @@ export default async function SchedulePage() {
             {totalToday} total appointments today
           </p>
         </div>
+
         <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
           <span className="text-xs text-muted-foreground">Live</span>

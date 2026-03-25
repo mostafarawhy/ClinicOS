@@ -11,16 +11,13 @@ const pageTitles: Record<string, string> = {
 };
 
 interface TopBarProps {
-  userName?: string;
-  role?: string;
+  userName: string;
+  role: string;
 }
 
-export function TopBar({
-  userName = "Dr. Admin",
-  role = "Admin",
-}: TopBarProps) {
+export function TopBar({ userName, role }: TopBarProps) {
   const pathname = usePathname();
-  // Match exact or prefix for patient sub-pages
+
   const title =
     Object.entries(pageTitles).find(
       ([key]) => pathname === key || pathname.startsWith(key + "/"),
