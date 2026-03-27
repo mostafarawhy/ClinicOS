@@ -1,11 +1,28 @@
-import { addDays, startOfWeek } from "date-fns";
+import { addDays, isValid, parseISO, startOfWeek } from "date-fns";
 import { getWeekAppointments } from "@/lib/queries/calendar";
 import { CalendarClient } from "./calendar-client";
+import { CalendarControls } from "./calendar-controls";
 
-export default async function CalendarPage() {
-  const today = new Date();
+function getSelectedDate(dateParam?: string): Date {
+  if (!dateParam) return new Date();
 
-  const weekStart = startOfWeek(today, { weekStartsOn: 6 });
+  const parsed = parseISO(dateParam);
+  return isValid(parsed) ? parsed : new Date();
+}
+
+type CalendarPageProps = {
+  searchParams?: Promise<{
+    date?: string;
+  }>;
+};
+
+export default async function CalendarPage({
+  searchParams,
+}: CalendarPageProps) {
+  const params = await searchParams;
+  const selectedDate = getSelectedDate(params?.date);
+
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 6 });
   weekStart.setHours(0, 0, 0, 0);
 
   const weekEnd = addDays(weekStart, 6);
@@ -14,10 +31,14 @@ export default async function CalendarPage() {
   const appointments = await getWeekAppointments(weekStart, weekEnd);
 
   return (
-    <CalendarClient
-      appointments={appointments}
-      weekStart={weekStart}
-      weekEnd={weekEnd}
-    />
+    <div className="space-y-4">
+      <CalendarControls weekStart={weekStart} />
+
+      <CalendarClient
+        appointments={appointments}
+        weekStart={weekStart}
+        weekEnd={weekEnd}
+      />
+    </div>
   );
 }

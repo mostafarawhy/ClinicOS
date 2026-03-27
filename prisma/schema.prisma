@@ -15,6 +15,15 @@ enum UserRole {
   DENTIST
 }
 
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  SICK_LEAVE
+  VACATION
+  REMOTE
+  DAY_OFF
+}
+
 enum AppointmentStatus {
   UPCOMING
   COMPLETED
@@ -39,12 +48,13 @@ enum TreatmentType {
 // ─── Models ──────────────────────────────────────────
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         UserRole @default(RECEPTIONIST)
-  createdAt    DateTime @default(now())
+  id                 String             @id @default(cuid())
+  name               String
+  email              String             @unique
+  passwordHash       String
+  role               UserRole           @default(RECEPTIONIST)
+  availabilityStatus AvailabilityStatus @default(AVAILABLE)
+  createdAt          DateTime           @default(now())
 
   dentist      Dentist?
   appointments Appointment[] @relation("CreatedBy")
@@ -94,7 +104,7 @@ model Appointment {
   dentist     Dentist @relation(fields: [dentistId], references: [id])
 
   createdById String
-  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  createdBy   User    @relation("CreatedBy", fields: [createdById], references: [id])
 
   @@index([date])
   @@index([dentistId, date])

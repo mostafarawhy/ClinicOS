@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
 import type { DentistWithAppointments } from "@/types";
 
-export async function getTodaySchedule(): Promise<DentistWithAppointments[]> {
-  const start = new Date();
+export async function getScheduleForDate(
+  selectedDate: Date,
+): Promise<DentistWithAppointments[]> {
+  const start = new Date(selectedDate);
   start.setHours(0, 0, 0, 0);
 
   const end = new Date(start);

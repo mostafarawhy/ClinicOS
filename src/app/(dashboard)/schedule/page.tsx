@@ -1,5 +1,6 @@
-import { format } from "date-fns";
-import { getTodaySchedule } from "@/lib/queries/schedule";
+import Link from "next/link";
+import { format, addDays, subDays, isValid, parseISO } from "date-fns";
+import { getScheduleForDate } from "@/lib/queries/schedule";
 import { ScheduleColumn } from "@/components/schedule/schedule-column";
 import type { AppointmentStatus, TreatmentType } from "@prisma/client";
 
@@ -11,34 +12,82 @@ function formatTreatment(raw: TreatmentType): string {
 }
 
 function formatStatus(raw: AppointmentStatus): string {
-  return raw.toLocaleLowerCase();
+  return raw.toLowerCase();
 }
 
-export default async function SchedulePage() {
-  const dentists = await getTodaySchedule();
+function toDateParam(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
 
-  const today = new Date();
+function getSelectedDate(dateParam?: string): Date {
+  if (!dateParam) {
+    return new Date();
+  }
 
-  const totalToday = dentists.reduce(
-    (sum, d) => sum + d.appointments.length,
+  const parsed = parseISO(dateParam);
+
+  if (!isValid(parsed)) {
+    return new Date();
+  }
+
+  return parsed;
+}
+
+type SchedulePageProps = {
+  searchParams?: Promise<{
+    date?: string;
+  }>;
+};
+
+export default async function SchedulePage({
+  searchParams,
+}: SchedulePageProps) {
+  const params = await searchParams;
+  const selectedDate = getSelectedDate(params?.date);
+
+  const dentists = await getScheduleForDate(selectedDate);
+
+  const totalAppointments = dentists.reduce(
+    (sum, dentist) => sum + dentist.appointments.length,
     0,
   );
 
+  const prevDate = subDays(selectedDate, 1);
+  const nextDate = addDays(selectedDate, 1);
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <p className="text-muted-foreground text-sm">
-            {format(today, "EEEE, MMMM d, yyyy")}
+          <p className="text-sm text-muted-foreground">
+            {format(selectedDate, "EEEE, MMMM d, yyyy")}
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {totalToday} total appointments today
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {totalAppointments} total appointments
           </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-          <span className="text-xs text-muted-foreground">Live</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-xs text-muted-foreground">Live</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/schedule?date=${toDateParam(prevDate)}`}
+              className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+            >
+              Previous
+            </Link>
+
+            <Link
+              href={`/schedule?date=${toDateParam(nextDate)}`}
+              className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+            >
+              Next
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -31,7 +31,9 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Stethoscope className="h-4 w-4 text-primary-foreground" />
+          <Link href={"/schedule"}>
+            <Stethoscope className="h-4 w-4 text-primary-foreground" />
+          </Link>
         </div>
         <div>
           <p className="text-sm font-semibold text-sidebar-foreground leading-none">

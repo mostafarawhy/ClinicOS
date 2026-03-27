@@ -1,8 +1,6 @@
 import { auth } from "@/lib/auth";
-import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
 import { StatusForm } from "./status-form";
-import { NotificationsForm } from "./notifications-form";
 import { AddUserForm } from "./add-user-form";
 
 function Section({
@@ -32,13 +30,6 @@ export default async function SettingsPage() {
   const user = session?.user;
   const isAdmin = user?.role === "ADMIN";
 
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2) ?? "?";
-
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <div>
@@ -47,18 +38,6 @@ export default async function SettingsPage() {
           Manage your account and preferences
         </p>
       </div>
-
-      {/* Profile */}
-      <Section
-        title="My Profile"
-        description="Update your personal information"
-      >
-        <ProfileForm
-          name={user?.name ?? ""}
-          email={user?.email ?? ""}
-          initials={initials}
-        />
-      </Section>
 
       {/* Password */}
       <Section title="Password" description="Change your login password">
@@ -74,12 +53,13 @@ export default async function SettingsPage() {
       </Section>
 
       {/* Notifications */}
-      <Section
+      {/* implement later improvments */}
+      {/* <Section
         title="Notifications"
         description="Choose what you want to be notified about"
       >
         <NotificationsForm />
-      </Section>
+      </Section> */}
 
       {/* Admin only */}
       {isAdmin && (
