@@ -39,8 +39,8 @@ export type SessionUser = {
 export type AppointmentFormData = {
   patientId: string;
   dentistId: string;
-  date: string; // "YYYY-MM-DD"
-  time: string; // "HH:MM"
+  date: string;
+  time: string;
   treatmentType: TreatmentType;
   status: AppointmentStatus;
   notes?: string;

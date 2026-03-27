@@ -48,7 +48,7 @@ async function main() {
     update: {},
     create: {
       name: "Dr. Ahmed Hassan",
-      color: "#2DD4BF", // teal
+      color: "#2DD4BF", // teal color
       userId: adminUser.id,
     },
   });
@@ -58,7 +58,7 @@ async function main() {
     update: {},
     create: {
       name: "Dr. Sara Khalil",
-      color: "#818CF8", // indigo
+      color: "#818CF8",
       userId: dentistUser.id,
     },
   });
