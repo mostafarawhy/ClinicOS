@@ -69,8 +69,7 @@ export async function createAppointment(
   }
 
   const [year, month, day] = dateStr.split("-").map(Number);
-  const appointmentDate = new Date(year, month - 1, day);
-  appointmentDate.setHours(0, 0, 0, 0);
+  const appointmentDate = new Date(Date.UTC(year, month - 1, day));
 
   if (Number.isNaN(appointmentDate.getTime())) {
     return { error: "Invalid appointment date." };
@@ -103,6 +102,7 @@ export async function createAppointment(
   });
 
   revalidatePath("/schedule");
+  revalidatePath("/calendar");
   revalidatePath("/appointments");
 
   return { success: true };

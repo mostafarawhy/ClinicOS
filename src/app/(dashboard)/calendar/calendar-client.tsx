@@ -6,12 +6,14 @@ import type { AppointmentWithRelations } from "@/types";
 
 const START_HOUR = 10;
 const END_HOUR = 20;
-const SLOT_HEIGHT = 60;
+const SLOT_HEIGHT = 52; // px per 30-min slot
 const WEEK_LENGTH = 6;
 
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => {
-  const h = i + START_HOUR;
-  return `${h.toString().padStart(2, "0")}:00`;
+// Half-hour slots: "10:00", "10:30", "11:00", ... "20:00"  (21 entries)
+const SLOTS = Array.from({ length: (END_HOUR - START_HOUR) * 2 + 1 }, (_, i) => {
+  const h = START_HOUR + Math.floor(i / 2);
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h.toString().padStart(2, "0")}:${m}`;
 });
 
 const DAY_LABELS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
@@ -24,7 +26,7 @@ const DENTIST_STYLES: Record<string, string> = {
 
 function timeToOffset(time: string): number {
   const [h, m] = time.split(":").map(Number);
-  return h + m / 60 - START_HOUR;
+  return (h - START_HOUR) * 2 + m / 30;
 }
 
 interface Props {
@@ -104,13 +106,22 @@ export function CalendarClient({ appointments, weekStart }: Props) {
             style={{ gridTemplateColumns: "52px repeat(6, 1fr)" }}
           >
             <div className="border-r border-border">
-              {HOURS.map((h) => (
+              {SLOTS.map((slot) => (
                 <div
-                  key={h}
+                  key={slot}
                   style={{ height: SLOT_HEIGHT }}
-                  className="flex items-start justify-end pr-2 pt-1.5"
+                  className="flex items-start justify-end pr-2 pt-1"
                 >
-                  <span className="text-[11px] text-muted-foreground">{h}</span>
+                  <span
+                    className={cn(
+                      "text-[10px]",
+                      slot.endsWith(":00")
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground/40",
+                    )}
+                  >
+                    {slot}
+                  </span>
                 </div>
               ))}
             </div>
@@ -129,12 +140,15 @@ export function CalendarClient({ appointments, weekStart }: Props) {
                     "relative border-r border-border last:border-r-0",
                     isToday && "bg-primary/[0.03]",
                   )}
-                  style={{ height: SLOT_HEIGHT * HOURS.length }}
+                  style={{ height: SLOT_HEIGHT * SLOTS.length }}
                 >
-                  {HOURS.map((_, i) => (
+                  {SLOTS.map((slot, i) => (
                     <div
                       key={i}
-                      className="absolute left-0 right-0 border-t border-border/40"
+                      className={cn(
+                        "absolute left-0 right-0 border-t",
+                        slot.endsWith(":00") ? "border-border/40" : "border-border/20",
+                      )}
                       style={{ top: i * SLOT_HEIGHT }}
                     />
                   ))}
@@ -150,7 +164,7 @@ export function CalendarClient({ appointments, weekStart }: Props) {
                       <div
                         key={appt.id}
                         className={cn(
-                          "absolute left-1 right-1 overflow-hidden rounded border px-2 py-1.5 transition-opacity hover:opacity-90",
+                          "absolute left-1 right-1 overflow-hidden rounded border px-1.5 py-1 transition-opacity hover:opacity-90",
                           style,
                         )}
                         style={{
@@ -159,11 +173,11 @@ export function CalendarClient({ appointments, weekStart }: Props) {
                         }}
                         title={`${appt.patient.fullName} — ${appt.treatmentType} (${appt.dentist.name})`}
                       >
-                        <p className="truncate text-xs font-medium leading-none">
+                        <p className="truncate text-[11px] font-medium leading-none">
                           {appt.patient.fullName}
                         </p>
 
-                        <p className="mt-1 truncate text-[11px] opacity-60">
+                        <p className="mt-0.5 truncate text-[10px] opacity-60 leading-none">
                           {appt.time} · {appt.treatmentType}
                         </p>
                       </div>

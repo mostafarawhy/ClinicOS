@@ -23,10 +23,10 @@ export default async function CalendarPage({
   const selectedDate = getSelectedDate(params?.date);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 6 });
-  weekStart.setHours(0, 0, 0, 0);
+  weekStart.setUTCHours(0, 0, 0, 0);
 
   const weekEnd = addDays(weekStart, 6);
-  weekEnd.setHours(0, 0, 0, 0);
+  weekEnd.setUTCHours(0, 0, 0, 0);
 
   const appointments = await getWeekAppointments(weekStart, weekEnd);
 

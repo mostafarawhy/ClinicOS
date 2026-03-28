@@ -5,10 +5,10 @@ export async function getScheduleForDate(
   selectedDate: Date,
 ): Promise<DentistWithAppointments[]> {
   const start = new Date(selectedDate);
-  start.setHours(0, 0, 0, 0);
+  start.setUTCHours(0, 0, 0, 0);
 
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 1);
 
   const dentists = await db.dentist.findMany({
     orderBy: { name: "asc" },
