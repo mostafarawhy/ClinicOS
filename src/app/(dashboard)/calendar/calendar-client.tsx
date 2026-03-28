@@ -6,15 +6,18 @@ import type { AppointmentWithRelations } from "@/types";
 
 const START_HOUR = 10;
 const END_HOUR = 20;
-const SLOT_HEIGHT = 52; // px per 30-min slot
+const SLOT_HEIGHT = 52; // per 30-min slot
 const WEEK_LENGTH = 6;
 
-// Half-hour slots: "10:00", "10:30", "11:00", ... "20:00"  (21 entries)
-const SLOTS = Array.from({ length: (END_HOUR - START_HOUR) * 2 + 1 }, (_, i) => {
-  const h = START_HOUR + Math.floor(i / 2);
-  const m = i % 2 === 0 ? "00" : "30";
-  return `${h.toString().padStart(2, "0")}:${m}`;
-});
+// Half-hour slots:
+const SLOTS = Array.from(
+  { length: (END_HOUR - START_HOUR) * 2 + 1 },
+  (_, i) => {
+    const h = START_HOUR + Math.floor(i / 2);
+    const m = i % 2 === 0 ? "00" : "30";
+    return `${h.toString().padStart(2, "0")}:${m}`;
+  },
+);
 
 const DAY_LABELS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
 
@@ -147,7 +150,9 @@ export function CalendarClient({ appointments, weekStart }: Props) {
                       key={i}
                       className={cn(
                         "absolute left-0 right-0 border-t",
-                        slot.endsWith(":00") ? "border-border/40" : "border-border/20",
+                        slot.endsWith(":00")
+                          ? "border-border/40"
+                          : "border-border/20",
                       )}
                       style={{ top: i * SLOT_HEIGHT }}
                     />

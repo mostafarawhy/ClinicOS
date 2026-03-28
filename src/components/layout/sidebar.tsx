@@ -17,11 +17,11 @@ import { signOut } from "next-auth/react";
 import { useSidebar } from "./sidebar-context";
 
 const navItems = [
-  { label: "Schedule",     href: "/schedule",     icon: CalendarDays    },
-  { label: "Appointments", href: "/appointments",  icon: PlusCircle      },
-  { label: "Patients",     href: "/patients",      icon: Users           },
-  { label: "Calendar",     href: "/calendar",      icon: CalendarRange   },
-  { label: "Analytics",    href: "/analytics",     icon: LayoutDashboard },
+  { label: "Schedule", href: "/schedule", icon: CalendarDays },
+  { label: "Appointments", href: "/appointments", icon: PlusCircle },
+  { label: "Patients", href: "/patients", icon: Users },
+  { label: "Calendar", href: "/calendar", icon: CalendarRange },
+  { label: "Analytics", href: "/analytics", icon: LayoutDashboard },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -40,7 +40,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="text-sm font-semibold text-sidebar-foreground leading-none">
             DentaFlow
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">Clinic Management</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Clinic Management
+          </p>
         </div>
       </div>
 
@@ -61,7 +63,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", active ? "text-sidebar-primary" : "")} />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      active ? "text-sidebar-primary" : "",
+                    )}
+                  />
                   {label}
                 </Link>
               </li>
@@ -82,7 +89,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground",
           )}
         >
-          <Settings className={cn("h-4 w-4 shrink-0", pathname === "/settings" ? "text-sidebar-primary" : "")} />
+          <Settings
+            className={cn(
+              "h-4 w-4 shrink-0",
+              pathname === "/settings" ? "text-sidebar-primary" : "",
+            )}
+          />
           Settings
         </Link>
         <button
@@ -102,12 +114,12 @@ export function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop: always-visible fixed sidebar ─────────────────── */}
+      {/*  Desktop: always-visible fixed sidebar  */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-60 flex-col bg-sidebar border-r border-sidebar-border">
         <SidebarContent />
       </aside>
 
-      {/* ── Mobile: backdrop ──────────────────────────────────────── */}
+      {/*  Mobile: backdrop  */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -116,7 +128,7 @@ export function Sidebar() {
         />
       )}
 
-      {/* ── Mobile: slide-in drawer ───────────────────────────────── */}
+      {/*  Mobile: slide-in drawer  */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-sidebar border-r border-sidebar-border",
