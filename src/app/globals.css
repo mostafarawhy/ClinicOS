@@ -123,3 +123,14 @@
     border-radius: 2px;
   }
 }
+/* Make all date inputs match dark UI */
+input[type="date"] {
+  background-color: hsl(var(--muted)); /* or any gray you like */
+  color: hsl(var(--foreground));
+}
+
+/* Make calendar icon white (Chrome/Safari/Edge) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}

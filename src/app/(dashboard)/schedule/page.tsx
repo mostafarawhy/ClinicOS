@@ -1,22 +1,14 @@
-import Link from "next/link";
-import { format, addDays, subDays, isValid, parseISO } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { getScheduleForDate } from "@/lib/queries/schedule";
 import { ScheduleColumn } from "@/components/schedule/schedule-column";
-import type { AppointmentStatus, TreatmentType } from "@prisma/client";
+import type { TreatmentType } from "@prisma/client";
+import { ScheduleControls } from "./schedule-controls";
 
 function formatTreatment(raw: TreatmentType): string {
   return raw
     .toLowerCase()
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatStatus(raw: AppointmentStatus): string {
-  return raw.toLowerCase();
-}
-
-function toDateParam(date: Date): string {
-  return format(date, "yyyy-MM-dd");
 }
 
 function getSelectedDate(dateParam?: string): Date {
@@ -52,9 +44,6 @@ export default async function SchedulePage({
     0,
   );
 
-  const prevDate = subDays(selectedDate, 1);
-  const nextDate = addDays(selectedDate, 1);
-
   return (
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -73,21 +62,7 @@ export default async function SchedulePage({
             <span className="text-xs text-muted-foreground">Live</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/schedule?date=${toDateParam(prevDate)}`}
-              className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-            >
-              Previous
-            </Link>
-
-            <Link
-              href={`/schedule?date=${toDateParam(nextDate)}`}
-              className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-            >
-              Next
-            </Link>
-          </div>
+          <ScheduleControls selectedDate={selectedDate} />
         </div>
       </div>
 
@@ -99,11 +74,11 @@ export default async function SchedulePage({
             phone: appt.patient.phone,
             treatment: formatTreatment(appt.treatmentType),
             time: appt.time,
-            status: formatStatus(appt.status),
+            status: appt.status,
           }));
 
           const completedCount = appointments.filter(
-            (a) => a.status === "completed",
+            (a) => a.status === "COMPLETED",
           ).length;
 
           return (
