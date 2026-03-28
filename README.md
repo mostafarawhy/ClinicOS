@@ -388,16 +388,27 @@ All three credentials are also shown on the login page for instant one-click acc
 
 ## Screenshots
 
-![Login page with demo credentials banner](./screenshots/login.png)
-![Daily schedule view with per-dentist columns](./screenshots/schedule.png)
-![Appointment booking form](./screenshots/appointments.png)
-![Patient list with search and last-visit filter](./screenshots/patients.png)
-![Patient profile with full visit history](./screenshots/patient-profile.png)
-![Weekly calendar time-grid color-coded by dentist](./screenshots/calendar.png)
-![Analytics dashboard with bar, donut, and line charts](./screenshots/analytics.png)
-![Settings page with password, availability, and user management](./screenshots/settings.png)
+![Login page](./screenshots/Login%20Page.png)
+![Daily schedule view with per-dentist columns](./screenshots/Schedule%20Page.png)
+![Appointment booking form](./screenshots/Appointments%20Page.png)
+![Patient list with search and last-visit filter](./screenshots/Patients%20Page.png)
+![Patient profile with full visit history](./screenshots/Patient%20History.png)
+![Weekly calendar time-grid color-coded by dentist](./screenshots/Calendar%20Page.png)
+![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics%20Page.png)
+![Settings page with password, availability, and user management](./screenshots/Settings.png)
+![Settings page user management](./screenshots/Settings(Admin).png)
 
-> Screenshots coming soon — visit the [live demo](https://clinic-os-alpha.vercel.app/) to see it in action.
+## MObile
+
+![Daily schedule view with per-dentist columns](./screenshots/Schedule%20Page(mobile).png)
+![Appointment booking form](./screenshots/Appointments%20Page%20(mobile).png)
+![Patient list with search and last-visit filter](./screenshots/Patients%20Page%20(mobile).png)
+![Weekly calendar time-grid color-coded by dentist](./screenshots/Calendar%20Page%20(mobile).png)
+![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics%20Page%20(mobile).png)
+![Settings page with password, availability, and user management](./screenshots/Settings%20Page%20(mobile).png)
+
+
+ [live demo](https://clinic-os-alpha.vercel.app/) 
 
 ---
 
