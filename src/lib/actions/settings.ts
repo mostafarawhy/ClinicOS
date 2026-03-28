@@ -130,19 +130,42 @@ export async function createUser(
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  await db.user.create({
-    data: {
-      name,
-      email,
-      role: roleValue,
-      passwordHash,
-      isActive: true,
-    },
-  });
+  try {
+    await db.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          role: roleValue as UserRole,
+          passwordHash,
+          isActive: true,
+        },
+      });
 
-  revalidatePath("/settings");
+      const shouldCreateDentistProfile =
+        roleValue === "ADMIN" || roleValue === "DENTIST";
 
-  return { success: true };
+      if (shouldCreateDentistProfile) {
+        await tx.dentist.create({
+          data: {
+            name,
+            color: "#6366F1",
+            userId: user.id,
+          },
+        });
+      }
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/appointments");
+    revalidatePath("/schedule");
+    revalidatePath("/calendar");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Create user failed:", error);
+    return { error: "Unable to create user right now." };
+  }
 }
 
 export async function updateAvailabilityStatus(
