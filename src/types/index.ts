@@ -6,9 +6,10 @@ import type {
   UserRole,
   AppointmentStatus,
   TreatmentType,
+  AvailabilityStatus,
 } from "@prisma/client";
 
-export type { UserRole, AppointmentStatus, TreatmentType };
+export type { UserRole, AppointmentStatus, TreatmentType, AvailabilityStatus };
 
 export type AppointmentWithRelations = Appointment & {
   patient: Pick<Patient, "id" | "fullName" | "phone">;
@@ -21,8 +22,9 @@ export type PatientWithAppointments = Patient & {
   appointments: AppointmentWithRelations[];
 };
 
-// Dentist with their appointments
+// extended `user` relation for availbilty status
 export type DentistWithAppointments = Dentist & {
+  user: Pick<User, "id" | "name" | "availabilityStatus">;
   appointments: AppointmentWithRelations[];
 };
 
@@ -35,7 +37,6 @@ export type SessionUser = {
 };
 
 // Form data types
-
 export type AppointmentFormData = {
   patientId: string;
   dentistId: string;

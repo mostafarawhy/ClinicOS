@@ -88,6 +88,7 @@ export default async function SchedulePage({
               color={dentist.color}
               appointments={appointments}
               completedCount={completedCount}
+              availabilityStatus={dentist.user.availabilityStatus}
             />
           );
         })}

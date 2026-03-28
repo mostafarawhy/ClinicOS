@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { PasswordForm } from "./password-form";
 import { StatusForm } from "./status-form";
 import { AddUserForm } from "./add-user-form";
@@ -28,7 +29,17 @@ function Section({
 export default async function SettingsPage() {
   const session = await auth();
   const user = session?.user;
+
   const isAdmin = user?.role === "ADMIN";
+
+  const dbUser = user?.id
+    ? await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          availabilityStatus: true,
+        },
+      })
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -49,17 +60,8 @@ export default async function SettingsPage() {
         title="Availability Status"
         description="Let your team know your current status"
       >
-        <StatusForm />
+        <StatusForm initialStatus={dbUser?.availabilityStatus} />
       </Section>
-
-      {/* Notifications */}
-      {/* implement later improvments */}
-      {/* <Section
-        title="Notifications"
-        description="Choose what you want to be notified about"
-      >
-        <NotificationsForm />
-      </Section> */}
 
       {/* Admin only */}
       {isAdmin && (

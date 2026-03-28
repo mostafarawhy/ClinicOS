@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, Phone } from "lucide-react";
-import type { AppointmentStatus } from "@prisma/client";
+import type { AppointmentStatus, AvailabilityStatus } from "@prisma/client";
 import StatusBadge from "./status-badge";
 
 type AvailabilityKey =
@@ -57,12 +57,22 @@ const availabilityConfig: Record<
   },
 };
 
+const availabilityMap: Record<AvailabilityStatus, AvailabilityKey> = {
+  AVAILABLE: "available",
+  BUSY: "busy",
+  SICK_LEAVE: "sick_leave",
+  VACATION: "vacation",
+  REMOTE: "remote",
+  DAY_OFF: "day_off",
+};
+
 interface Props {
   dentist: string;
   color: string;
   appointments: ScheduleAppointment[];
   completedCount: number;
-  availabilityStatus?: string;
+
+  availabilityStatus?: AvailabilityStatus;
 }
 
 export function ScheduleColumn({
@@ -70,13 +80,12 @@ export function ScheduleColumn({
   color,
   appointments,
   completedCount,
-  availabilityStatus = "available",
-}: Props) {
-  const normalizedAvailability =
-    availabilityStatus.toLowerCase() as AvailabilityKey;
 
-  const avail =
-    availabilityConfig[normalizedAvailability] ?? availabilityConfig.available;
+  availabilityStatus = "AVAILABLE",
+}: Props) {
+  const availabilityKey = availabilityMap[availabilityStatus] ?? "available";
+
+  const avail = availabilityConfig[availabilityKey];
 
   return (
     <div className="relative overflow-visible rounded-xl border border-border bg-card">

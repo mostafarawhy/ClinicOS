@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import type { UserRole } from "@prisma/client";
+import type { AvailabilityStatus, UserRole } from "@prisma/client";
 
 export type SettingsActionState = {
   success?: boolean;
@@ -18,6 +18,17 @@ function getTrimmedString(formData: FormData, key: string): string {
 
 function isValidUserRole(value: string): value is UserRole {
   return value === "ADMIN" || value === "RECEPTIONIST";
+}
+
+function isValidAvailabilityStatus(value: string): value is AvailabilityStatus {
+  return (
+    value === "AVAILABLE" ||
+    value === "BUSY" ||
+    value === "SICK_LEAVE" ||
+    value === "VACATION" ||
+    value === "REMOTE" ||
+    value === "DAY_OFF"
+  );
 }
 
 export async function changePassword(
@@ -49,6 +60,7 @@ export async function changePassword(
   const user = await db.user.findUnique({
     where: { id: session.user.id },
   });
+
   if (!user) {
     return { error: "User not found." };
   }
@@ -57,6 +69,7 @@ export async function changePassword(
     currentPassword,
     user.passwordHash,
   );
+
   if (!isCurrentPasswordValid) {
     return { error: "Current password is incorrect." };
   }
@@ -121,13 +134,50 @@ export async function createUser(
     data: {
       name,
       email,
-
       role: roleValue,
       passwordHash,
     },
   });
 
   revalidatePath("/settings");
+
+  return { success: true };
+}
+
+export async function updateAvailabilityStatus(
+  _prevState: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Not authenticated." };
+  }
+
+  const statusValue = getTrimmedString(formData, "availabilityStatus");
+
+  if (!isValidAvailabilityStatus(statusValue)) {
+    return { error: "Invalid availability status." };
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  });
+
+  if (!user) {
+    return { error: "User not found." };
+  }
+
+  await db.user.update({
+    where: { id: session.user.id },
+    data: {
+      availabilityStatus: statusValue,
+    },
+  });
+
+  revalidatePath("/settings");
+  revalidatePath("/schedule");
 
   return { success: true };
 }
