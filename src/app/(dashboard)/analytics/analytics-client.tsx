@@ -78,7 +78,7 @@ export function AnalyticsClient({ data }: Props) {
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Appointments This Week
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={380}>
             <BarChart data={weekly} barSize={40}>
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -109,7 +109,7 @@ export function AnalyticsClient({ data }: Props) {
           <h3 className="text-sm font-semibold text-foreground mb-4">
             Treatment Breakdown
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={380}>
             <PieChart>
               <Pie
                 data={treatments}
