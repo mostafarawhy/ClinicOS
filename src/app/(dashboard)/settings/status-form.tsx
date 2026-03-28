@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { AvailabilityStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import {
@@ -60,13 +60,6 @@ export function StatusForm({
     updateAvailabilityStatus,
     initialState,
   );
-
-  useEffect(() => {
-    if (state.success) {
-      // keep UI synced after successful save
-      setSelected(selected);
-    }
-  }, [state.success, selected]);
 
   return (
     <form action={formAction} className="space-y-4 px-6 py-5">

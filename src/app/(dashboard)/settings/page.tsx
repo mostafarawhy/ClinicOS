@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { PasswordForm } from "./password-form";
 import { StatusForm } from "./status-form";
 import { AddUserForm } from "./add-user-form";
+import { ManageUsers } from "./manage-users";
 
 function Section({
   title,
@@ -14,11 +15,11 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="px-6 py-5 border-b border-border">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="border-b border-border px-6 py-5">
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         )}
       </div>
       {children}
@@ -29,7 +30,6 @@ function Section({
 export default async function SettingsPage() {
   const session = await auth();
   const user = session?.user;
-
   const isAdmin = user?.role === "ADMIN";
 
   const dbUser = user?.id
@@ -37,25 +37,37 @@ export default async function SettingsPage() {
         where: { id: user.id },
         select: {
           availabilityStatus: true,
+          isActive: true,
         },
       })
     : null;
 
+  const allUsers = isAdmin
+    ? await db.user.findMany({
+        orderBy: [{ isActive: "desc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+        },
+      })
+    : [];
+
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="mx-auto max-w-2xl space-y-5">
       <div>
         <h1 className="text-base font-semibold text-foreground">Settings</h1>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="mt-1 text-xs text-muted-foreground">
           Manage your account and preferences
         </p>
       </div>
 
-      {/* Password */}
       <Section title="Password" description="Change your login password">
         <PasswordForm />
       </Section>
 
-      {/* Status */}
       <Section
         title="Availability Status"
         description="Let your team know your current status"
@@ -63,14 +75,22 @@ export default async function SettingsPage() {
         <StatusForm initialStatus={dbUser?.availabilityStatus} />
       </Section>
 
-      {/* Admin only */}
       {isAdmin && (
-        <Section
-          title="Add New User"
-          description="Create a login account for a staff member"
-        >
-          <AddUserForm />
-        </Section>
+        <>
+          <Section
+            title="Add New User"
+            description="Create a login account for a staff member"
+          >
+            <AddUserForm />
+          </Section>
+
+          <Section
+            title="Manage User Access"
+            description="Deactivate staff accounts to block access without deleting history"
+          >
+            <ManageUsers users={allUsers} currentUserId={user?.id ?? ""} />
+          </Section>
+        </>
       )}
     </div>
   );

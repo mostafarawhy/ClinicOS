@@ -17,7 +17,7 @@ function getTrimmedString(formData: FormData, key: string): string {
 }
 
 function isValidUserRole(value: string): value is UserRole {
-  return value === "ADMIN" || value === "RECEPTIONIST";
+  return value === "ADMIN" || value === "RECEPTIONIST" || value === "DENTIST";
 }
 
 function isValidAvailabilityStatus(value: string): value is AvailabilityStatus {
@@ -99,7 +99,7 @@ export async function createUser(
   }
 
   const name = getTrimmedString(formData, "name");
-  const email = getTrimmedString(formData, "email");
+  const email = getTrimmedString(formData, "email").toLowerCase();
   const roleValue = getTrimmedString(formData, "role");
   const password = getTrimmedString(formData, "password");
   const confirmPassword = getTrimmedString(formData, "confirmPassword");
@@ -136,6 +136,7 @@ export async function createUser(
       email,
       role: roleValue,
       passwordHash,
+      isActive: true,
     },
   });
 
@@ -162,11 +163,15 @@ export async function updateAvailabilityStatus(
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true },
+    select: { id: true, isActive: true },
   });
 
   if (!user) {
     return { error: "User not found." };
+  }
+
+  if (!user.isActive) {
+    return { error: "Inactive users cannot update their status." };
   }
 
   await db.user.update({
@@ -180,4 +185,135 @@ export async function updateAvailabilityStatus(
   revalidatePath("/schedule");
 
   return { success: true };
+}
+
+type ToggleUserAccessActionState = {
+  error?: string;
+  success?: boolean;
+};
+
+async function verifyAdminPassword(
+  adminId: string,
+  password: string,
+): Promise<boolean> {
+  const admin = await db.user.findUnique({
+    where: { id: adminId },
+    select: { passwordHash: true },
+  });
+
+  if (!admin) return false;
+
+  return bcrypt.compare(password, admin.passwordHash);
+}
+
+export async function deactivateUser(
+  _prev: ToggleUserAccessActionState,
+  formData: FormData,
+): Promise<ToggleUserAccessActionState> {
+  const session = await auth();
+
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    return { error: "Unauthorized." };
+  }
+
+  const targetId = getTrimmedString(formData, "targetId");
+  const password = getTrimmedString(formData, "password");
+
+  if (!targetId || !password) {
+    return { error: "All fields are required." };
+  }
+
+  if (targetId === session.user.id) {
+    return { error: "You cannot deactivate your own account." };
+  }
+
+  const passwordValid = await verifyAdminPassword(session.user.id, password);
+
+  if (!passwordValid) {
+    return { error: "Incorrect password." };
+  }
+
+  const targetUser = await db.user.findUnique({
+    where: { id: targetId },
+    select: { id: true, isActive: true },
+  });
+
+  if (!targetUser) {
+    return { error: "User not found." };
+  }
+
+  if (!targetUser.isActive) {
+    return { error: "User is already inactive." };
+  }
+
+  try {
+    await db.user.update({
+      where: { id: targetId },
+      data: { isActive: false },
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/schedule");
+    revalidatePath("/appointments");
+    revalidatePath("/calendar");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Deactivate user failed:", error);
+    return { error: "Unable to deactivate this user right now." };
+  }
+}
+
+export async function reactivateUser(
+  _prev: ToggleUserAccessActionState,
+  formData: FormData,
+): Promise<ToggleUserAccessActionState> {
+  const session = await auth();
+
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    return { error: "Unauthorized." };
+  }
+
+  const targetId = getTrimmedString(formData, "targetId");
+  const password = getTrimmedString(formData, "password");
+
+  if (!targetId || !password) {
+    return { error: "All fields are required." };
+  }
+
+  const passwordValid = await verifyAdminPassword(session.user.id, password);
+
+  if (!passwordValid) {
+    return { error: "Incorrect password." };
+  }
+
+  const targetUser = await db.user.findUnique({
+    where: { id: targetId },
+    select: { id: true, isActive: true },
+  });
+
+  if (!targetUser) {
+    return { error: "User not found." };
+  }
+
+  if (targetUser.isActive) {
+    return { error: "User is already active." };
+  }
+
+  try {
+    await db.user.update({
+      where: { id: targetId },
+      data: { isActive: true },
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/schedule");
+    revalidatePath("/appointments");
+    revalidatePath("/calendar");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Reactivate user failed:", error);
+    return { error: "Unable to reactivate this user right now." };
+  }
 }
