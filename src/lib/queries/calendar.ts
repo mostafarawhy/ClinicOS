@@ -1,10 +1,12 @@
 import { db } from "@/lib/db";
+import { getUtcWeekRange } from "@/lib/datetime";
 import type { AppointmentWithRelations } from "@/types";
 
 export async function getWeekAppointments(
-  start: Date,
-  end: Date,
+  selectedDate: Date,
 ): Promise<AppointmentWithRelations[]> {
+  const { start, end } = getUtcWeekRange(selectedDate);
+
   return db.appointment.findMany({
     where: {
       date: {

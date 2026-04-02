@@ -2,14 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { addDays, format, subDays } from "date-fns";
+import { getTodayDateParam, toDateParam } from "@/lib/datetime";
 
 interface Props {
   selectedDate: Date;
   weekStart: Date;
-}
-
-function toDateParam(date: Date): string {
-  return format(date, "yyyy-MM-dd");
 }
 
 export function CalendarControls({ selectedDate, weekStart }: Props) {
@@ -17,14 +14,18 @@ export function CalendarControls({ selectedDate, weekStart }: Props) {
 
   const previousWeek = subDays(weekStart, 7);
   const nextWeek = addDays(weekStart, 7);
-  const today = new Date();
+
+  function navigateToDate(dateParam: string) {
+    router.replace(`/calendar?date=${dateParam}`);
+    router.refresh();
+  }
 
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
 
     if (!value) return;
 
-    router.push(`/calendar?date=${value}`);
+    navigateToDate(value);
   }
 
   return (
@@ -42,9 +43,7 @@ export function CalendarControls({ selectedDate, weekStart }: Props) {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() =>
-            router.push(`/calendar?date=${toDateParam(previousWeek)}`)
-          }
+          onClick={() => navigateToDate(toDateParam(previousWeek))}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
         >
           Previous Week
@@ -52,7 +51,7 @@ export function CalendarControls({ selectedDate, weekStart }: Props) {
 
         <button
           type="button"
-          onClick={() => router.push(`/calendar?date=${toDateParam(today)}`)}
+          onClick={() => navigateToDate(getTodayDateParam())}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
         >
           Today
@@ -67,7 +66,7 @@ export function CalendarControls({ selectedDate, weekStart }: Props) {
 
         <button
           type="button"
-          onClick={() => router.push(`/calendar?date=${toDateParam(nextWeek)}`)}
+          onClick={() => navigateToDate(toDateParam(nextWeek))}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
         >
           Next Week

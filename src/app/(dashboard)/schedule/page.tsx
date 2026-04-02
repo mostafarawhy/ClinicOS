@@ -1,28 +1,14 @@
-import { format, isValid, parseISO } from "date-fns";
 import { getScheduleForDate } from "@/lib/queries/schedule";
 import { ScheduleColumn } from "@/components/schedule/schedule-column";
 import type { TreatmentType } from "@prisma/client";
 import { ScheduleControls } from "./schedule-controls";
+import { formatFullDate, fromDateParam } from "@/lib/datetime";
 
 function formatTreatment(raw: TreatmentType): string {
   return raw
     .toLowerCase()
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function getSelectedDate(dateParam?: string): Date {
-  if (!dateParam) {
-    return new Date();
-  }
-
-  const parsed = parseISO(dateParam);
-
-  if (!isValid(parsed)) {
-    return new Date();
-  }
-
-  return parsed;
 }
 
 type SchedulePageProps = {
@@ -35,7 +21,7 @@ export default async function SchedulePage({
   searchParams,
 }: SchedulePageProps) {
   const params = await searchParams;
-  const selectedDate = getSelectedDate(params?.date);
+  const selectedDate = fromDateParam(params?.date);
 
   const dentists = await getScheduleForDate(selectedDate);
 
@@ -49,7 +35,7 @@ export default async function SchedulePage({
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">
-            {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            {formatFullDate(selectedDate)}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {totalAppointments} total appointments
