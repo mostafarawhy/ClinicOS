@@ -5,11 +5,11 @@ import { Menu } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 
 const pageTitles: Record<string, string> = {
-  "/schedule":     "Today's Schedule",
+  "/schedule": "Today's Schedule",
   "/appointments": "Appointment Booking",
-  "/patients":     "Patients",
-  "/calendar":     "Weekly Calendar",
-  "/analytics":    "Analytics Dashboard",
+  "/patients": "Patients",
+  "/calendar": "Weekly Calendar",
+  "/analytics": "Analytics Dashboard",
 };
 
 interface TopBarProps {
@@ -29,7 +29,7 @@ export function TopBar({ userName, role }: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4 lg:px-6">
       <div className="flex items-center gap-3">
-        {/* Hamburger — mobile only */}
+        {/* Hamburger for mobile */}
         <button
           onClick={toggle}
           className="lg:hidden -ml-1 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
@@ -43,11 +43,17 @@ export function TopBar({ userName, role }: TopBarProps) {
 
       <div className="flex items-center gap-3">
         <div className="text-right hidden sm:block">
-          <p className="text-sm font-medium text-foreground leading-none">{userName}</p>
+          <p className="text-sm font-medium text-foreground leading-none">
+            {userName}
+          </p>
           <p className="text-xs text-muted-foreground mt-0.5">{role}</p>
         </div>
         <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0">
-          {userName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+          {userName
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .slice(0, 2)}
         </div>
       </div>
     </header>

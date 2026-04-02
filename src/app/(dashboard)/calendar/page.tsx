@@ -23,16 +23,17 @@ export default async function CalendarPage({
   const selectedDate = getSelectedDate(params?.date);
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 6 });
-  weekStart.setUTCHours(0, 0, 0, 0);
+  weekStart.setHours(0, 0, 0, 0);
 
+  // exclusive end boundary: Friday 00:00
   const weekEnd = addDays(weekStart, 6);
-  weekEnd.setUTCHours(0, 0, 0, 0);
+  weekEnd.setHours(0, 0, 0, 0);
 
   const appointments = await getWeekAppointments(weekStart, weekEnd);
 
   return (
     <div className="space-y-4">
-      <CalendarControls weekStart={weekStart} />
+      <CalendarControls selectedDate={selectedDate} weekStart={weekStart} />
 
       <CalendarClient
         appointments={appointments}

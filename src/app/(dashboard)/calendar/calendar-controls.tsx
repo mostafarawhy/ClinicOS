@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { addDays, format, subDays } from "date-fns";
 
 interface Props {
+  selectedDate: Date;
   weekStart: Date;
 }
 
@@ -11,7 +12,7 @@ function toDateParam(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
 
-export function CalendarControls({ weekStart }: Props) {
+export function CalendarControls({ selectedDate, weekStart }: Props) {
   const router = useRouter();
 
   const previousWeek = subDays(weekStart, 7);
@@ -32,7 +33,7 @@ export function CalendarControls({ weekStart }: Props) {
         <h2 className="text-sm font-semibold text-foreground">
           Weekly Calendar
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="mt-1 text-xs text-muted-foreground">
           {format(weekStart, "MMM d")} –{" "}
           {format(addDays(weekStart, 5), "MMM d, yyyy")}
         </p>
@@ -59,7 +60,7 @@ export function CalendarControls({ weekStart }: Props) {
 
         <input
           type="date"
-          defaultValue={toDateParam(weekStart)}
+          value={toDateParam(selectedDate)}
           onChange={handleDateChange}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
         />

@@ -117,7 +117,7 @@ export function AnalyticsClient({ data }: Props) {
                 cy="50%"
                 innerRadius={40}
                 outerRadius={80}
-                paddingAngle={3}
+                paddingAngle={0.5}
                 dataKey="value"
               >
                 {treatments.map((entry, i) => (

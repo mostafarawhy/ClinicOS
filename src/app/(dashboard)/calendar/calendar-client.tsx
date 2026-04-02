@@ -22,9 +22,9 @@ const SLOTS = Array.from(
 const DAY_LABELS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu"];
 
 const DENTIST_STYLES: Record<string, string> = {
-  "#2DD4BF": "bg-teal-500/20 border-teal-500/40 text-teal-300",
-  "#818CF8": "bg-indigo-500/20 border-indigo-500/40 text-indigo-300",
-  "#FB923C": "bg-orange-500/20 border-orange-500/40 text-orange-300",
+  "#2DD4BF": "bg-teal-100 border-teal-300 text-teal-800",
+  "#818CF8": "bg-indigo-100 border-indigo-300 text-indigo-800",
+  "#FB923C": "bg-orange-100 border-orange-300 text-orange-800",
 };
 
 function timeToOffset(time: string): number {
@@ -178,11 +178,11 @@ export function CalendarClient({ appointments, weekStart }: Props) {
                         }}
                         title={`${appt.patient.fullName} — ${appt.treatmentType} (${appt.dentist.name})`}
                       >
-                        <p className="truncate text-[11px] font-medium leading-none">
+                        <p className="truncate text-[11px] font-semibold leading-none">
                           {appt.patient.fullName}
                         </p>
 
-                        <p className="mt-0.5 truncate text-[10px] opacity-60 leading-none">
+                        <p className="mt-0.5 truncate text-[10px] font-medium opacity-70 leading-none">
                           {appt.time} · {appt.treatmentType}
                         </p>
                       </div>

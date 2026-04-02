@@ -114,7 +114,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/*  Desktop: always-visible fixed sidebar  */}
+      {/*  Desktop  */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-60 flex-col bg-sidebar border-r border-sidebar-border">
         <SidebarContent />
       </aside>
@@ -128,7 +128,7 @@ export function Sidebar() {
         />
       )}
 
-      {/*  Mobile: slide-in drawer  */}
+      {/*  Mobile-slide-in drawer  */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-sidebar border-r border-sidebar-border",
