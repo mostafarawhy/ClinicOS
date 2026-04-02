@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { TreatmentType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { isValidAppointmentTime } from "@/lib/time-slots";
 
 const TREATMENT_MAP: Record<string, TreatmentType> = {
   Cleaning: "CLEANING",
@@ -60,6 +61,10 @@ export async function createAppointment(
     return { error: "Invalid treatment type selected." };
   }
 
+  if (!isValidAppointmentTime(time)) {
+    return { error: "Invalid appointment time selected." };
+  }
+
   const dentist = await db.dentist.findUnique({
     where: { id: dentistId },
   });
@@ -75,6 +80,26 @@ export async function createAppointment(
     return { error: "Invalid appointment date." };
   }
 
+  const existingAppointment = await db.appointment.findFirst({
+    where: {
+      dentistId: dentist.id,
+      date: appointmentDate,
+      time,
+      status: {
+        not: "CANCELLED",
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existingAppointment) {
+    return {
+      error: "This time slot is already booked for the selected dentist.",
+    };
+  }
+
   let patient = await db.patient.findFirst({
     where: { phone },
   });
@@ -84,6 +109,15 @@ export async function createAppointment(
       data: {
         fullName: patientName,
         phone,
+        email,
+        notes,
+      },
+    });
+  } else {
+    patient = await db.patient.update({
+      where: { id: patient.id },
+      data: {
+        fullName: patientName,
         email,
       },
     });

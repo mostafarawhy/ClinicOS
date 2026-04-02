@@ -89,6 +89,9 @@ export function PatientsClient({ patients }: Props) {
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-foreground">
+          Filter by last visit:
+        </span>
         <div className="flex items-center gap-1">
           {TABS.map((t) => (
             <button

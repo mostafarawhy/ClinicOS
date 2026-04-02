@@ -4,6 +4,7 @@ import type { AppointmentWithRelations } from "@/types";
 
 export async function getWeekAppointments(
   selectedDate: Date,
+  dentistId?: string,
 ): Promise<AppointmentWithRelations[]> {
   const { start, end } = getUtcWeekRange(selectedDate);
 
@@ -13,6 +14,7 @@ export async function getWeekAppointments(
         gte: start,
         lt: end,
       },
+      ...(dentistId ? { dentistId } : {}),
     },
     orderBy: [{ date: "asc" }, { time: "asc" }],
     include: {

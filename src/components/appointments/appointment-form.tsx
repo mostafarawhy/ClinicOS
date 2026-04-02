@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { createAppointment } from "@/lib/actions/appointments";
 import type { AppointmentActionState } from "@/lib/actions/appointments";
+import { APPOINTMENT_TIME_SLOTS } from "@/lib/time-slots";
 
 const TREATMENTS = [
   "Cleaning",
@@ -161,13 +162,14 @@ export function AppointmentForm({ dentists }: Props) {
           <label htmlFor="time" className={labelClass}>
             Time
           </label>
-          <input
-            id="time"
-            name="time"
-            type="time"
-            required
-            className={inputClass}
-          />
+          <select className={inputClass} name="time" id="time" required>
+            <option value="">Select time</option>
+            {APPOINTMENT_TIME_SLOTS.map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
