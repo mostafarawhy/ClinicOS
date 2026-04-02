@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/login"];
-const ADMIN_ROUTES = ["/dashboard", "/analytics"];
+const ADMIN_ROUTES = ["/analytics"];
 
 export default auth((req) => {
   const { nextUrl } = req;
@@ -24,7 +24,9 @@ export default auth((req) => {
   }
 
   if (isAdminRoute && session.user.role === "RECEPTIONIST") {
-    return NextResponse.redirect(new URL("/schedule", req.url));
+    return NextResponse.redirect(
+      new URL("/schedule?unauthorized=true", req.url),
+    );
   }
 
   return NextResponse.next();

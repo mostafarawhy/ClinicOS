@@ -3,6 +3,7 @@ import { ScheduleColumn } from "@/components/schedule/schedule-column";
 import type { TreatmentType } from "@prisma/client";
 import { ScheduleControls } from "./schedule-controls";
 import { formatFullDate, fromDateParam } from "@/lib/datetime";
+import { UnauthorizedBanner } from "./unauthorized-banner";
 
 function formatTreatment(raw: TreatmentType): string {
   return raw
@@ -14,6 +15,7 @@ function formatTreatment(raw: TreatmentType): string {
 type SchedulePageProps = {
   searchParams?: Promise<{
     date?: string;
+    unauthorized?: string;
   }>;
 };
 
@@ -22,6 +24,7 @@ export default async function SchedulePage({
 }: SchedulePageProps) {
   const params = await searchParams;
   const selectedDate = fromDateParam(params?.date);
+  const isUnauthorized = params?.unauthorized === "true";
 
   const dentists = await getScheduleForDate(selectedDate);
 
@@ -32,6 +35,8 @@ export default async function SchedulePage({
 
   return (
     <div>
+      {isUnauthorized && <UnauthorizedBanner />}
+
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-muted-foreground">
