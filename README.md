@@ -138,7 +138,7 @@ Route protection runs at the edge before any page renders:
 ```ts
 // src/middleware.ts
 const PUBLIC_ROUTES = ["/login"];
-const ADMIN_ROUTES  = ["/dashboard", "/calendar", "/analytics"];
+const ADMIN_ROUTES  = ["/analytics"];
 
 // No session       → redirect to /login
 // Session + public → redirect to /schedule (already signed in)
