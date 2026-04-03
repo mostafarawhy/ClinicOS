@@ -428,27 +428,26 @@ All three credentials are also shown on the login page for instant one-click acc
 ## Screenshots
 
 ![Login page](./screenshots/Login-Page.png)
-![Daily schedule view with day filter](./screenshots/Schedule-Page-(by-day-filter).png.png)
+![Daily schedule view with day filter](./screenshots/Schedule-Page-(by-day-filter).png)
 ![Appointment booking form](./screenshots/Appointments-Booking-Page.png)
 ![Patient list with search and last-visit filter](./screenshots/Patients-Page-(filter-last-visit-date).png)
 ![Patient profile with full visit history](./screenshots/Patient-History-Page.png)
 ![Weekly calendar with DR filter](./screenshots/Calendar-Page(filter-by-DR-date).png)
-![Weekly calendar filterd by DR](./screenshots/Calendar-by-DR-page.png)
+![Weekly calendar filtered by DR](./screenshots/Calendar-by-DR-page.png)
 ![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics-Page.png)
 ![Settings page with password, availability, and user management](./screenshots/User-Settings-Page.png)
 ![Settings page user management](./screenshots/Settings-Page(Admin).png)
 
-## MObile
+## Mobile
 
 ![Daily schedule view with per-dentist columns](./screenshots/Schedule-Page(mobile).png)
 ![Appointment booking form](./screenshots/Appointment-Page(mobile).png)
 ![Patient list](./screenshots/Patients-Page(mobile).png)
 ![Weekly calendar](./screenshots/Calendar-Page(mobile).png)
-![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics-Page(mobile).png)
-![Settings page with password, availability, and user management](./screenshots/Settings-Page(mobile).png)
+![Analytics dashboard](./screenshots/Analytics-Page(mobile).png)
+![Settings page](./screenshots/Settings-Page(mobile).png)
 
-
- [live demo](https://clinic-os-alpha.vercel.app/)
+[→ Live Demo](https://clinic-os-alpha.vercel.app/)
 
 ---
 
