@@ -438,14 +438,6 @@ All three credentials are also shown on the login page for instant one-click acc
 ![Settings page with password, availability, and user management](./screenshots/User-Settings-Page.png)
 ![Settings page user management](./screenshots/Settings-Page(Admin).png)
 
-## Mobile
-
-![Daily schedule view with per-dentist columns](./screenshots/Schedule-Page(mobile).png)
-![Appointment booking form](./screenshots/Appointment-Page(mobile).png)
-![Patient list](./screenshots/Patients-Page(mobile).png)
-![Weekly calendar](./screenshots/Calendar-Page(mobile).png)
-![Analytics dashboard](./screenshots/Analytics-Page(mobile).png)
-![Settings page](./screenshots/Settings-Page(mobile).png)
 
 [→ Live Demo](https://clinic-os-alpha.vercel.app/)
 
