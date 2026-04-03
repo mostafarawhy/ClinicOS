@@ -32,9 +32,10 @@ Three roles with different access levels. One codebase. No Excel.
 
 ### 📅 Schedule
 - Day-by-day view of all appointments grouped by dentist column
-- Inline status updates (UPCOMING → COMPLETED / NO_SHOW / CANCELLED) with server-side validation
-- Live availability badge per dentist (Available, Busy, Sick Leave, Vacation, Remote, Day Off)
+- Inline appointment status update with two-stage confirmation dropdown (select → confirm before applying)
+- Availability status badge per dentist column showing current status with color dot and friendly message (e.g. "Ready to see patients", "Currently with a patient")
 - Date navigation with URL-based state (`?date=YYYY-MM-DD`)
+- Unauthorized access banner — shown once when a receptionist attempts to access a restricted route, URL cleaned after 3.5 seconds so the banner never reappears on refresh
 
 ### 🗓️ Appointment Booking
 - Find-or-create patient logic: looks up by phone number, creates a new record if it's a first visit
@@ -48,9 +49,14 @@ Three roles with different access levels. One codebase. No Excel.
 
 ### 📆 Calendar
 - Weekly time-grid view from 10:00 to 20:00, split into 30-minute slots
-- Color-coded appointments by dentist using a static color map (Tailwind purge-safe)
-- Week navigation with `?date=` param; work week anchored to Saturday
-- Single DB query per week, filtered client-side by day with `isSameDay`
+- Two view modes: Clinic Overview (all dentists) and Dentist Schedule (single dentist filter)
+- All-dentists view: appointments absolutely positioned with a colored left border per dentist, side-by-side overlap handling for same-slot appointments
+- Single dentist view: full-width cards with background color theming per dentist (Tailwind purge-safe static class map)
+- Today column highlighted with a filled primary circle behind the date number
+- Hour/half-hour grid lines with distinct opacity levels — hour lines full, half-hour lines at 30% opacity
+- Only hour labels shown in the time gutter — half-hour labels hidden to reduce visual noise
+- Dentist filter and week navigation (Previous / Today / Next + date picker) in controls bar
+- Week boundaries calculated with `weekStartsOn: 6` (Saturday) for Egyptian work week
 
 ### 📊 Analytics
 - Stat cards: total patients, appointments this month, completion rate %, no-show rate %
@@ -116,6 +122,15 @@ src/lib/
 
 Reads live in `queries/`, writes live in `actions/`. No API routes are used for data mutations.
 
+### Component Modularity
+
+The calendar was refactored from a single 269-line component into 6 focused files colocated with the route:
+
+- `calendar.config.ts` is the single source of truth for all calendar constants (`START_HOUR`, `END_HOUR`, `SLOT_HEIGHT`, `WEEK_LENGTH`, `SLOTS`, `DAY_LABELS`, `DENTIST_STYLES`), the shared `DentistOption` type, and two pure utility functions (`timeToOffset`, `formatTreatmentLabel`). Nothing is redefined across files.
+- `CalendarClient` is a thin orchestrator — 63 lines — that derives `isAllDentistsView` and `weekDays`, then composes four sub-components. It contains no rendering logic of its own.
+- Each sub-component has exactly one job: `CalendarLegend` renders the mode label and dentist color pills, `CalendarDayHeaders` renders the header row with the today indicator, `CalendarTimeGutter` renders the time label column, and `CalendarDayColumn` owns all appointment rendering including overlap layout and the all-dentists / single-dentist branch.
+- This pattern prevents god components and makes each piece independently readable and testable. Imports always point to `calendar.config.ts` — no duplicated type or constant definitions.
+
 ### RBAC Middleware
 
 Route protection runs at the edge before any page renders:
@@ -155,9 +170,20 @@ clinic-os/
 │   │   ├── (auth)/login/         # Login page with demo credentials banner
 │   │   ├── (dashboard)/
 │   │   │   ├── schedule/         # Daily schedule + date navigation
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── schedule-controls.tsx
+│   │   │   │   └── unauthorized-banner.tsx
 │   │   │   ├── appointments/     # Booking form + [id] detail page
 │   │   │   ├── patients/         # Patient list + [id] profile page
-│   │   │   ├── calendar/         # Weekly time-grid calendar
+│   │   │   ├── calendar/         # Weekly time-grid calendar (modular)
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── calendar-client.tsx      — thin orchestrator, ~63 lines
+│   │   │   │   ├── calendar-controls.tsx    — dentist filter + week navigation
+│   │   │   │   ├── calendar-day-column.tsx  — single day column + appointment cards
+│   │   │   │   ├── calendar-day-headers.tsx — day header row with today indicator
+│   │   │   │   ├── calendar-legend.tsx      — mode label + dentist color legend
+│   │   │   │   ├── calendar-time-gutter.tsx — time labels column
+│   │   │   │   └── calendar.config.ts       — constants, types, pure utilities
 │   │   │   ├── analytics/        # Charts and stat cards
 │   │   │   └── settings/         # Password, availability, user management
 │   │   └── layout.tsx            # Root layout + Vercel Analytics
@@ -165,7 +191,6 @@ clinic-os/
 │   └── components/
 │       ├── layout/               # Sidebar, topbar
 │       ├── schedule/             # ScheduleColumn, StatusBadge
-│       ├── calendar/             # CalendarClient, CalendarControls
 │       ├── appointments/         # AppointmentForm
 │       ├── patients/             # PatientsClient
 │       ├── analytics/            # Chart wrapper components
@@ -321,6 +346,20 @@ await db.$transaction(async (tx) => {
 
 If either write fails, both roll back. No orphaned user records without a linked dentist profile.
 
+### Calendar Component Modularization
+
+The original `CalendarClient` was a 269-line monolithic component mixing constants, utility functions, a shared type, and two deeply nested render branches in a single file. It was split into 6 focused files colocated with the route under `src/app/(dashboard)/calendar/`.
+
+`calendar.config.ts` is the single source of truth: it exports all layout constants (`START_HOUR`, `END_HOUR`, `SLOT_HEIGHT`, `WEEK_LENGTH`, `SLOTS`, `DAY_LABELS`, `DENTIST_STYLES`), the `DentistOption` type used by both `CalendarClient` and `CalendarControls`, and two pure utility functions — `timeToOffset(time)` which converts a `"HH:MM"` string to a fractional slot index for absolute positioning, and `formatTreatmentLabel(value)` which normalizes treatment type enum strings for display. No type or constant is defined in more than one place.
+
+`CalendarClient` is now a 63-line orchestrator that derives `isAllDentistsView` and `weekDays`, then composes `CalendarLegend`, `CalendarDayHeaders`, `CalendarTimeGutter`, and `CalendarDayColumn`. It contains no rendering logic of its own. All appointment layout decisions — overlap handling, color lookup, absolute positioning — live inside `CalendarDayColumn`.
+
+### Unauthorized Access UX
+
+When a receptionist navigates to a restricted route, the edge middleware redirects to `/schedule?unauthorized=true`. The schedule `page.tsx` reads this param server-side and conditionally renders `<UnauthorizedBanner />` into the tree.
+
+`UnauthorizedBanner` is a client component. On mount, it reads `window.location.search` directly to check for the param (rather than relying on the server-rendered prop, which would re-trigger on every navigation). If the param is present, it sets `visible = true` and starts a 3500ms timer that calls `router.replace(window.location.pathname, { scroll: false })` — stripping the param from the URL without a full page reload. After the timer fires, a browser refresh hits `/schedule` with a clean URL and the server never renders the banner component again. The banner itself stays visible for the current session since there is no dismiss timer — only the URL is cleaned. This means the banner shows exactly once per unauthorized navigation attempt and never persists across refreshes.
+
 ---
 
 ## Getting Started
@@ -388,27 +427,28 @@ All three credentials are also shown on the login page for instant one-click acc
 
 ## Screenshots
 
-![Login page](./screenshots/Login%20Page.png)
-![Daily schedule view with per-dentist columns](./screenshots/Schedule%20Page.png)
-![Appointment booking form](./screenshots/Appointments%20Page.png)
-![Patient list with search and last-visit filter](./screenshots/Patients%20Page.png)
-![Patient profile with full visit history](./screenshots/Patient%20History.png)
-![Weekly calendar time-grid color-coded by dentist](./screenshots/Calendar%20Page.png)
-![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics%20Page.png)
-![Settings page with password, availability, and user management](./screenshots/Settings.png)
-![Settings page user management](./screenshots/Settings(Admin).png)
+![Login page](./screenshots/Login-Page.png)
+![Daily schedule view with day filter](./screenshots/Schedule-Page-(by-day-filter).png.png)
+![Appointment booking form](./screenshots/Appointments-Booking-Page.png)
+![Patient list with search and last-visit filter](./screenshots/Patients-Page-(filter-last-visit-date).png)
+![Patient profile with full visit history](./screenshots/Patient-History-Page.png)
+![Weekly calendar with DR filter](./screenshots/Calendar-Page(filter-by-DR-date).png)
+![Weekly calendar filterd by DR](./screenshots/Calendar-by-DR-page.png)
+![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics-Page.png)
+![Settings page with password, availability, and user management](./screenshots/User-Settings-Page.png)
+![Settings page user management](./screenshots/Settings-Page(Admin).png)
 
 ## MObile
 
-![Daily schedule view with per-dentist columns](./screenshots/Schedule%20Page(mobile).png)
-![Appointment booking form](./screenshots/Appointments%20Page%20(mobile).png)
-![Patient list with search and last-visit filter](./screenshots/Patients%20Page%20(mobile).png)
-![Weekly calendar time-grid color-coded by dentist](./screenshots/Calendar%20Page%20(mobile).png)
-![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics%20Page%20(mobile).png)
-![Settings page with password, availability, and user management](./screenshots/Settings%20Page%20(mobile).png)
+![Daily schedule view with per-dentist columns](./screenshots/Schedule-Page(mobile).png)
+![Appointment booking form](./screenshots/Appointment-Page(mobile).png)
+![Patient list](./screenshots/Patients-Page(mobile).png)
+![Weekly calendar](./screenshots/Calendar-Page(mobile).png)
+![Analytics dashboard with bar, donut, and line charts](./screenshots/Analytics-Page(mobile).png)
+![Settings page with password, availability, and user management](./screenshots/Settings-Page(mobile).png)
 
 
- [live demo](https://clinic-os-alpha.vercel.app/) 
+ [live demo](https://clinic-os-alpha.vercel.app/)
 
 ---
 
