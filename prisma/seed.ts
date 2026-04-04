@@ -13,8 +13,145 @@ const db = new PrismaClient();
 function makeDate(daysFromToday: number): Date {
   const now = new Date();
   return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysFromToday),
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() + daysFromToday,
+    ),
   );
+}
+
+const APPOINTMENT_TIMES = [
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "13:00",
+  "13:30",
+  "14:00",
+  "15:00",
+  "15:30",
+  "16:00",
+  "17:00",
+];
+
+const TREATMENTS = [
+  TreatmentType.CHECKUP,
+  TreatmentType.CLEANING,
+  TreatmentType.FILLING,
+  TreatmentType.EXTRACTION,
+  TreatmentType.ROOT_CANAL,
+  TreatmentType.CROWN,
+  TreatmentType.WHITENING,
+  TreatmentType.ORTHODONTICS,
+  TreatmentType.IMPLANT,
+  TreatmentType.CONSULTATION,
+  TreatmentType.OTHER,
+];
+
+type SeedPatient = { id: string };
+type SeedDentist = { id: string };
+type SeedUser = { id: string };
+
+function isWeekend(date: Date) {
+  const day = date.getUTCDay();
+  return day === 5 || day === 6; // Friday + Saturday
+}
+
+function pickFromArray<T>(arr: T[], index: number): T {
+  return arr[index % arr.length];
+}
+
+function getPastStatus(index: number): AppointmentStatus {
+  // Bias toward COMPLETED, with some NO_SHOW and CANCELLED
+  if (index % 9 === 0) return AppointmentStatus.CANCELLED;
+  if (index % 5 === 0) return AppointmentStatus.NO_SHOW;
+  return AppointmentStatus.COMPLETED;
+}
+
+function getAppointmentsPerDay(daysFromToday: number): number {
+  // lighter distribution, but enough data for dashboard realism
+  if (daysFromToday === 0) return 6;
+  if (Math.abs(daysFromToday) % 7 === 0) return 2;
+  if (Math.abs(daysFromToday) % 5 === 0) return 4;
+  if (Math.abs(daysFromToday) % 3 === 0) return 3;
+  return 2;
+}
+
+function buildAppointments(params: {
+  patients: SeedPatient[];
+  dentists: SeedDentist[];
+  receptionists: SeedUser[];
+}) {
+  const { patients, dentists, receptionists } = params;
+
+  const appointments: {
+    date: Date;
+    time: string;
+    status: AppointmentStatus;
+    treatmentType: TreatmentType;
+    notes?: string;
+    patientId: string;
+    dentistId: string;
+    createdById: string;
+  }[] = [];
+
+  let globalIndex = 0;
+
+  // ~5 months back to ~5 months forward
+  for (let dayOffset = -150; dayOffset <= 150; dayOffset++) {
+    const date = makeDate(dayOffset);
+
+    if (isWeekend(date)) continue;
+
+    const appointmentsCount = getAppointmentsPerDay(dayOffset);
+
+    for (let slot = 0; slot < appointmentsCount; slot++) {
+      const patient = pickFromArray(patients, globalIndex + slot);
+      const dentist = pickFromArray(dentists, globalIndex + dayOffset + slot + 1000);
+      const receptionist = pickFromArray(
+        receptionists,
+        globalIndex + slot + dayOffset + 2000,
+      );
+      const treatment = pickFromArray(TREATMENTS, globalIndex + slot * 2);
+      const time = pickFromArray(APPOINTMENT_TIMES, slot + (Math.abs(dayOffset) % 4));
+
+      let status: AppointmentStatus;
+
+      if (dayOffset < 0) {
+        status = getPastStatus(globalIndex + slot);
+      } else if (dayOffset === 0) {
+        // Today: early slots completed, later slots upcoming
+        status =
+          slot < Math.ceil(appointmentsCount / 2)
+            ? AppointmentStatus.COMPLETED
+            : AppointmentStatus.UPCOMING;
+      } else {
+        status = AppointmentStatus.UPCOMING;
+      }
+
+      appointments.push({
+        date,
+        time,
+        status,
+        treatmentType: treatment,
+        notes:
+          status === AppointmentStatus.CANCELLED
+            ? "Cancelled by patient."
+            : status === AppointmentStatus.NO_SHOW
+              ? "Patient did not attend."
+              : undefined,
+        patientId: patient.id,
+        dentistId: dentist.id,
+        createdById: receptionist.id,
+      });
+    }
+
+    globalIndex += appointmentsCount;
+  }
+
+  return appointments;
 }
 
 async function main() {
@@ -29,11 +166,11 @@ async function main() {
 
   // ── Hash passwords ─────────────────────────────────────────────────────────
   const [adminHash, d1Hash, d2Hash, r1Hash, r2Hash] = await Promise.all([
-    bcrypt.hash("admin123",    12),
-    bcrypt.hash("dentist123",  12),
-    bcrypt.hash("dentist456",  12),
-    bcrypt.hash("reception123",12),
-    bcrypt.hash("reception456",12),
+    bcrypt.hash("admin123", 12),
+    bcrypt.hash("dentist123", 12),
+    bcrypt.hash("dentist456", 12),
+    bcrypt.hash("reception123", 12),
+    bcrypt.hash("reception456", 12),
   ]);
 
   // ── Users ──────────────────────────────────────────────────────────────────
@@ -89,174 +226,195 @@ async function main() {
   // ── Dentist profiles ───────────────────────────────────────────────────────
   const [dAhmed, dSara, dOmar] = await Promise.all([
     db.dentist.create({
-      data: { name: "Dr. Ahmed Samy",  color: "#2DD4BF", userId: userAhmed.id },
+      data: { name: "Dr. Ahmed Samy", color: "#2DD4BF", userId: userAhmed.id },
     }),
     db.dentist.create({
-      data: { name: "Dr. Sara Khalil", color: "#818CF8", userId: userSara.id  },
+      data: { name: "Dr. Sara Khalil", color: "#818CF8", userId: userSara.id },
     }),
     db.dentist.create({
-      data: { name: "Dr. Omar Nasser", color: "#FB923C", userId: userOmar.id  },
+      data: { name: "Dr. Omar Nasser", color: "#FB923C", userId: userOmar.id },
     }),
   ]);
   console.log("✓  Dentist profiles linked.");
 
   // ── Patients ───────────────────────────────────────────────────────────────
-  const [
-    p01, p02, p03, p04, p05,
-    p06, p07, p08, p09, p10,
-    p11, p12, p13, p14, p15,
-  ] = await Promise.all([
-    db.patient.create({ data: { fullName: "Layla Mostafa",   phone: "01011112222", email: "layla.mostafa@gmail.com",   notes: "Allergic to penicillin. Requires antibiotic-free procedures."         } }),
-    db.patient.create({ data: { fullName: "Karim Adel",      phone: "01022223333", email: "karim.adel@outlook.com",    notes: "Dental anxiety. Prefers short sessions with frequent breaks."          } }),
-    db.patient.create({ data: { fullName: "Hana Samir",      phone: "01033334444", email: "hana.samir@gmail.com"                                                                                      } }),
-    db.patient.create({ data: { fullName: "Youssef Fawzy",   phone: "01044445555", email: "youssef.fawzy@yahoo.com"                                                                                   } }),
-    db.patient.create({ data: { fullName: "Nour El-Din",     phone: "01055556666", email: "nour.eldin@gmail.com",      notes: "Prefers morning appointments only."                                    } }),
-    db.patient.create({ data: { fullName: "Dina Rashad",     phone: "01066667777", email: "dina.rashad@hotmail.com"                                                                                   } }),
-    db.patient.create({ data: { fullName: "Omar Tarek",      phone: "01077778888", email: "omar.tarek@gmail.com",      notes: "Diabetic. Monitor blood sugar before any invasive procedure."         } }),
-    db.patient.create({ data: { fullName: "Salma Ibrahim",   phone: "01088889999", email: "salma.ibrahim@gmail.com"                                                                                   } }),
-    db.patient.create({ data: { fullName: "Ahmed Farouk",    phone: "01099990000", email: "ahmed.farouk@outlook.com",  notes: "Hypertensive. Avoid epinephrine-based local anesthesia."              } }),
-    db.patient.create({ data: { fullName: "Mona Hassan",     phone: "01111112222", email: "mona.hassan@gmail.com"                                                                                     } }),
-    db.patient.create({ data: { fullName: "Tarek Gamal",     phone: "01122223333", email: "tarek.gamal@yahoo.com",     notes: "Requires full X-ray review before any restorative work."              } }),
-    db.patient.create({ data: { fullName: "Rania Khaled",    phone: "01133334444", email: "rania.khaled@gmail.com"                                                                                    } }),
-    db.patient.create({ data: { fullName: "Samy Nabil",      phone: "01144445555", email: "samy.nabil@hotmail.com"                                                                                    } }),
-    db.patient.create({ data: { fullName: "Yasmine Mostafa", phone: "01155556666", email: "yasmine.mostafa@gmail.com"                                                                                 } }),
-    db.patient.create({ data: { fullName: "Hassan Saeed",    phone: "01166667777", email: "hassan.saeed@outlook.com",  notes: "Latex allergy. Use latex-free gloves and materials only."             } }),
+  const patients = await Promise.all([
+    db.patient.create({
+      data: {
+        fullName: "Layla Mostafa",
+        phone: "01011112222",
+        email: "layla.mostafa@gmail.com",
+        notes: "Allergic to penicillin. Requires antibiotic-free procedures.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Karim Adel",
+        phone: "01022223333",
+        email: "karim.adel@outlook.com",
+        notes: "Dental anxiety. Prefers short sessions with frequent breaks.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Hana Samir",
+        phone: "01033334444",
+        email: "hana.samir@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Youssef Fawzy",
+        phone: "01044445555",
+        email: "youssef.fawzy@yahoo.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Nour El-Din",
+        phone: "01055556666",
+        email: "nour.eldin@gmail.com",
+        notes: "Prefers morning appointments only.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Dina Rashad",
+        phone: "01066667777",
+        email: "dina.rashad@hotmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Omar Tarek",
+        phone: "01077778888",
+        email: "omar.tarek@gmail.com",
+        notes: "Diabetic. Monitor blood sugar before any invasive procedure.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Salma Ibrahim",
+        phone: "01088889999",
+        email: "salma.ibrahim@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Ahmed Farouk",
+        phone: "01099990000",
+        email: "ahmed.farouk@outlook.com",
+        notes: "Hypertensive. Avoid epinephrine-based local anesthesia.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Mona Hassan",
+        phone: "01111112222",
+        email: "mona.hassan@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Tarek Gamal",
+        phone: "01122223333",
+        email: "tarek.gamal@yahoo.com",
+        notes: "Requires full X-ray review before any restorative work.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Rania Khaled",
+        phone: "01133334444",
+        email: "rania.khaled@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Samy Nabil",
+        phone: "01144445555",
+        email: "samy.nabil@hotmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Yasmine Mostafa",
+        phone: "01155556666",
+        email: "yasmine.mostafa@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Hassan Saeed",
+        phone: "01166667777",
+        email: "hassan.saeed@outlook.com",
+        notes: "Latex allergy. Use latex-free gloves and materials only.",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Farah Ashraf",
+        phone: "01211112222",
+        email: "farah.ashraf@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Mahmoud Emad",
+        phone: "01222223333",
+        email: "mahmoud.emad@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Reem Tamer",
+        phone: "01233334444",
+        email: "reem.tamer@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Mostafa Wael",
+        phone: "01244445555",
+        email: "mostafa.wael@gmail.com",
+      },
+    }),
+    db.patient.create({
+      data: {
+        fullName: "Nada Hossam",
+        phone: "01255556666",
+        email: "nada.hossam@gmail.com",
+      },
+    }),
   ]);
   console.log("✓  Patients created.");
 
   // ── Appointments ───────────────────────────────────────────────────────────
-  const r1 = userNour.id;
-  const r2 = userHana.id;
-
-  await db.appointment.createMany({
-    data: [
-
-      // ════════════════════════════════════════════════════════════════════════
-      // LAST MONTH  ·  ~20 appointments  ·  COMPLETED / NO_SHOW / CANCELLED
-      // ════════════════════════════════════════════════════════════════════════
-
-      // -40 days  (3 appts)
-      { date: makeDate(-40), time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CLEANING,     patientId: p01.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(-40), time: "13:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.FILLING,      patientId: p02.id, dentistId: dSara.id,  createdById: r2 },
-      { date: makeDate(-40), time: "15:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.CHECKUP,      patientId: p03.id, dentistId: dOmar.id,  createdById: r1 },
-
-      // -37 days  (2 appts)
-      { date: makeDate(-37), time: "10:30", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CONSULTATION, patientId: p04.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(-37), time: "14:00", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.WHITENING,    patientId: p05.id, dentistId: dOmar.id,  createdById: r1 },
-
-      // -34 days  (3 appts)
-      { date: makeDate(-34), time: "11:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.EXTRACTION,   patientId: p06.id, dentistId: dSara.id,  createdById: r2 },
-      { date: makeDate(-34), time: "12:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.ORTHODONTICS, patientId: p08.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(-34), time: "16:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CROWN,        patientId: p07.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // -31 days  (2 appts)
-      { date: makeDate(-31), time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.ROOT_CANAL,   patientId: p09.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(-31), time: "13:30", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.IMPLANT,      patientId: p10.id, dentistId: dSara.id,  createdById: r2 },
-
-      // -28 days  (3 appts)
-      { date: makeDate(-28), time: "11:30", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.CLEANING,     patientId: p11.id, dentistId: dOmar.id,  createdById: r1 },
-      { date: makeDate(-28), time: "14:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.FILLING,      patientId: p12.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(-28), time: "17:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.OTHER,        patientId: p13.id, dentistId: dSara.id,  createdById: r1 },
-
-      // -24 days  (3 appts)
-      { date: makeDate(-24), time: "10:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.WHITENING,    patientId: p14.id, dentistId: dOmar.id,  createdById: r2 },
-      { date: makeDate(-24), time: "12:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CHECKUP,      patientId: p01.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-24), time: "15:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CONSULTATION, patientId: p15.id, dentistId: dAhmed.id, createdById: r2 },
-
-      // -21 days  (2 appts)
-      { date: makeDate(-21), time: "10:30", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.CROWN,        patientId: p02.id, dentistId: dOmar.id,  createdById: r1 },
-      { date: makeDate(-21), time: "13:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.EXTRACTION,   patientId: p03.id, dentistId: dAhmed.id, createdById: r2 },
-
-      // -18 days  (2 appts)
-      { date: makeDate(-18), time: "11:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.ORTHODONTICS, patientId: p04.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-18), time: "16:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.IMPLANT,      patientId: p05.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // ════════════════════════════════════════════════════════════════════════
-      // CURRENT MONTH UP TO TODAY  ·  ~20 appointments  ·  COMPLETED / NO_SHOW / CANCELLED
-      // ════════════════════════════════════════════════════════════════════════
-
-      // -15 days  (3 appts)
-      { date: makeDate(-15), time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CLEANING,     patientId: p06.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(-15), time: "14:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.ROOT_CANAL,   patientId: p07.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-15), time: "17:00", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.FILLING,      patientId: p08.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // -12 days  (2 appts)
-      { date: makeDate(-12), time: "11:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CHECKUP,      patientId: p09.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(-12), time: "13:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.WHITENING,    patientId: p10.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // -10 days  (3 appts)
-      { date: makeDate(-10), time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CROWN,        patientId: p11.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-10), time: "15:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CONSULTATION, patientId: p12.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(-10), time: "18:00", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.EXTRACTION,   patientId: p13.id, dentistId: dOmar.id,  createdById: r1 },
-
-      // -8 days  (2 appts)
-      { date: makeDate(-8),  time: "10:30", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.IMPLANT,      patientId: p14.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(-8),  time: "13:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.OTHER,        patientId: p15.id, dentistId: dSara.id,  createdById: r1 },
-
-      // -6 days  (3 appts)
-      { date: makeDate(-6),  time: "11:00", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.CLEANING,     patientId: p01.id, dentistId: dOmar.id,  createdById: r2 },
-      { date: makeDate(-6),  time: "14:30", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.FILLING,      patientId: p02.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-6),  time: "16:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.ORTHODONTICS, patientId: p03.id, dentistId: dAhmed.id, createdById: r2 },
-
-      // -4 days  (2 appts)
-      { date: makeDate(-4),  time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CHECKUP,      patientId: p04.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(-4),  time: "15:00", status: AppointmentStatus.CANCELLED,  treatmentType: TreatmentType.ROOT_CANAL,   patientId: p05.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // -2 days  (2 appts)
-      { date: makeDate(-2),  time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CROWN,        patientId: p06.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(-2),  time: "13:30", status: AppointmentStatus.NO_SHOW,    treatmentType: TreatmentType.WHITENING,    patientId: p07.id, dentistId: dSara.id,  createdById: r2 },
-
-      // -1 day  (2 appts)
-      { date: makeDate(-1),  time: "11:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CONSULTATION, patientId: p08.id, dentistId: dOmar.id,  createdById: r1 },
-      { date: makeDate(-1),  time: "14:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CLEANING,     patientId: p09.id, dentistId: dAhmed.id, createdById: r2 },
-
-      // ════════════════════════════════════════════════════════════════════════
-      // TODAY  ·  6 appointments  ·  COMPLETED + UPCOMING
-      // ════════════════════════════════════════════════════════════════════════
-
-      { date: makeDate(0),   time: "10:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.CHECKUP,      patientId: p10.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(0),   time: "11:30", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.FILLING,      patientId: p11.id, dentistId: dSara.id,  createdById: r2 },
-      { date: makeDate(0),   time: "12:00", status: AppointmentStatus.COMPLETED,  treatmentType: TreatmentType.EXTRACTION,   patientId: p12.id, dentistId: dOmar.id,  createdById: r1 },
-      { date: makeDate(0),   time: "15:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.ROOT_CANAL,   patientId: p13.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(0),   time: "17:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CROWN,        patientId: p14.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(0),   time: "19:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CONSULTATION, patientId: p15.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // ════════════════════════════════════════════════════════════════════════
-      // NEXT 2 WEEKS  ·  15 appointments  ·  all UPCOMING
-      // ════════════════════════════════════════════════════════════════════════
-
-      // +1 day  (3 appts)
-      { date: makeDate(1),   time: "10:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CLEANING,     patientId: p01.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(1),   time: "13:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.WHITENING,    patientId: p02.id, dentistId: dSara.id,  createdById: r2 },
-      { date: makeDate(1),   time: "15:30", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.IMPLANT,      patientId: p03.id, dentistId: dOmar.id,  createdById: r1 },
-
-      // +3 days  (2 appts)
-      { date: makeDate(3),   time: "10:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.FILLING,      patientId: p04.id, dentistId: dAhmed.id, createdById: r2 },
-      { date: makeDate(3),   time: "14:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.ORTHODONTICS, patientId: p05.id, dentistId: dSara.id,  createdById: r1 },
-
-      // +5 days  (3 appts)
-      { date: makeDate(5),   time: "11:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CHECKUP,      patientId: p06.id, dentistId: dOmar.id,  createdById: r2 },
-      { date: makeDate(5),   time: "13:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CONSULTATION, patientId: p07.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(5),   time: "16:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CLEANING,     patientId: p08.id, dentistId: dSara.id,  createdById: r2 },
-
-      // +7 days  (2 appts)
-      { date: makeDate(7),   time: "10:30", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.CROWN,        patientId: p09.id, dentistId: dOmar.id,  createdById: r1 },
-      { date: makeDate(7),   time: "14:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.EXTRACTION,   patientId: p10.id, dentistId: dAhmed.id, createdById: r2 },
-
-      // +9 days  (2 appts)
-      { date: makeDate(9),   time: "11:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.ROOT_CANAL,   patientId: p11.id, dentistId: dSara.id,  createdById: r1 },
-      { date: makeDate(9),   time: "15:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.WHITENING,    patientId: p12.id, dentistId: dOmar.id,  createdById: r2 },
-
-      // +11 days  (2 appts)
-      { date: makeDate(11),  time: "10:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.IMPLANT,      patientId: p13.id, dentistId: dAhmed.id, createdById: r1 },
-      { date: makeDate(11),  time: "13:30", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.OTHER,        patientId: p14.id, dentistId: dSara.id,  createdById: r2 },
-
-      // +14 days  (1 appt)
-      { date: makeDate(14),  time: "12:00", status: AppointmentStatus.UPCOMING,   treatmentType: TreatmentType.FILLING,      patientId: p15.id, dentistId: dOmar.id,  createdById: r1 },
-    ],
+  const appointmentData = buildAppointments({
+    patients,
+    dentists: [dAhmed, dSara, dOmar],
+    receptionists: [userNour, userHana],
   });
 
-  console.log("✓  Appointments created.");
+  // createMany can fail if batch is too large on some setups, so chunk it
+  const chunkSize = 200;
+  for (let i = 0; i < appointmentData.length; i += chunkSize) {
+    await db.appointment.createMany({
+      data: appointmentData.slice(i, i + chunkSize),
+    });
+  }
+
+  console.log(`✓  Appointments created. (${appointmentData.length})`);
+
+  const pastCount = appointmentData.filter(
+    (a) => a.date.getTime() < makeDate(0).getTime(),
+  ).length;
+  const todayCount = appointmentData.filter(
+    (a) => a.date.getTime() === makeDate(0).getTime(),
+  ).length;
+  const futureCount = appointmentData.filter(
+    (a) => a.date.getTime() > makeDate(0).getTime(),
+  ).length;
 
   console.log(`
 ────────────────────────────────────────────────────────────
@@ -270,14 +428,13 @@ async function main() {
   └─ Reception   reception2@clinic.com   password: reception456
 
   COUNTS
-  ├─ Users           5  (1 admin, 2 dentists, 2 receptionists)
+  ├─ Users             5
   ├─ Dentist profiles  3
-  ├─ Patients       15
-  └─ Appointments   61
-       ├─ Last month        20  (COMPLETED / NO_SHOW / CANCELLED)
-       ├─ Current month     20  (COMPLETED / NO_SHOW / CANCELLED)
-       ├─ Today              6  (3 COMPLETED + 3 UPCOMING)
-       └─ Next 2 weeks      15  (all UPCOMING)
+  ├─ Patients          ${patients.length}
+  └─ Appointments      ${appointmentData.length}
+       ├─ Past ~5 months     ${pastCount}
+       ├─ Today              ${todayCount}
+       └─ Future ~5 months   ${futureCount}
 ────────────────────────────────────────────────────────────
 `);
 }

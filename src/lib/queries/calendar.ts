@@ -14,6 +14,9 @@ export async function getWeekAppointments(
         gte: start,
         lt: end,
       },
+      status: {
+        not: "CANCELLED",
+      },
       ...(dentistId ? { dentistId } : {}),
     },
     orderBy: [{ date: "asc" }, { time: "asc" }],
